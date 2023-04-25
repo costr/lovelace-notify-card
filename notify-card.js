@@ -22,7 +22,7 @@ class NotifyCard extends HTMLElement {
       this.card.appendChild(this.content);
       this.appendChild(this.card);
     }
-    this.card.header = this.config.card_title ?? "Send Notification";
+    this.card.header = this.config.card_title ?? this.config.broadcast ? "Send Broadcast" : "Send Notification";
     this.content.innerHTML = "";
 
     if(this.config.notification_title instanceof Object){
@@ -34,7 +34,7 @@ class NotifyCard extends HTMLElement {
       `
     }
     
-    let label = this.config.label ?? "Notification Text";
+    let label = this.config.label ?? this.config.broadcast ? "Broadcast Text" : "Notification Text";
     this.content.innerHTML += `
     <div style="display: flex">   
       <paper-input id="notification_text" style="flex-grow: 1" label="${label}">
@@ -60,7 +60,11 @@ class NotifyCard extends HTMLElement {
       if(domain === "tts") {
         this.hass.callService(domain, target, {"entity_id": this.config.entity, "message": msg});
       } else if (domain === "google_assistant_sdk") {
-        this.hass.callService(domain, target, {"media_player": this.config.entity, "command": msg});
+        if (this.config.entity){
+          this.hass.callService(domain, target, {"media_player": this.config.entity, "command": (this.config.broadcast ? "broadcast " : "") + msg});  
+        } else {
+          this.hass.callService(domain, target, {"command": (this.config.broadcast ? "broadcast " : "") + msg});
+        }    
       } else {
         this.hass.callService(domain, target, {message: msg, title: title, data: this.config.data});
       }
